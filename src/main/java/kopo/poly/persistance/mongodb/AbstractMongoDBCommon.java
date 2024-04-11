@@ -93,7 +93,7 @@ public abstract class AbstractMongoDBCommon {
      * @return 삭제결과
      */
 
-    protected boolean dropCollection(MongoTemplate mongodb, String colNm, String index) {
+    protected boolean dropCollection(MongoTemplate mongodb, String colNm) {
 
         boolean res = false;
 

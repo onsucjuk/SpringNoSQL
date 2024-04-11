@@ -13,7 +13,7 @@ public record MelonDTO(
         String collectTime, // 수집시간
         String song,
         String singer,
-        int singleCnt,
+        int singerCnt,
         String updateSinger,
         String nickname,
         List<String> member,

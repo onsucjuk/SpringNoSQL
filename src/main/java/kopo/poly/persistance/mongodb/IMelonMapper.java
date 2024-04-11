@@ -22,7 +22,45 @@ public interface IMelonMapper {
      * @return 노래 리스트
      */
 
-    List<MelonDTO> getSonList(String colNm) throws Exception;
+    List<MelonDTO> getSongList(String colNm) throws Exception;
+
+    /**
+     * 가수별 수집된 노래의 수 가져오기
+     *
+     * @param colNm 조회할 컬렉션 이름
+     * @return 노래 리스트
+     */
+
+    List<MelonDTO> getSingerSongCnt(String colNm) throws Exception;
+
+    /**
+     * 가수 이름으로 조회하기
+     *
+     * @param colNm 조회할 컬렉션 이름
+     * @param pDTO 가수명
+     * @return 노래 리스트
+     */
+
+    List<MelonDTO> getSingerSong(String colNm, MelonDTO pDTO) throws Exception;
+
+    /**
+     * 컬렉션 삭제하기
+     *
+     * @param colNm 조회할 컬렉션 이름
+     * @return 저장 결과
+     */
+
+    int dropCollection(String colNm) throws Exception;
+
+    /**
+     * MongoDB insertMany 함수를 통해 멜론차트 저장하기
+     *
+     * @param colNm 조회할 컬렉션 이름
+     * @param pList 가수명
+     * @return 저장 결과
+     */
+
+    int insertManyField(String colNm, List<MelonDTO> pList) throws Exception;
 
 
 
