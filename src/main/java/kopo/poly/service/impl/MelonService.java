@@ -180,4 +180,34 @@ public class MelonService implements IMelonService {
 
         return rList;
     }
+
+    @Override
+    public List<MelonDTO> updateField(MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".updateField Start!");
+
+        List<MelonDTO> rList = null; // 변경된 데이터 조회 결과
+
+        // 수정할 컬렉션
+        String colNm = "MELON_" + DateUtil.getDateTime("yyyyMMdd");
+
+        // 기존 수집된 멜론Top100 수집한 컬렉션 삭제하기
+        melonMapper.dropCollection(colNm);
+
+        // 멜론Top100 수집하기
+        if (this.collectMelonSong() == 1) {
+
+            if (melonMapper.updateField(colNm, pDTO) == 1) {
+
+                // 변경된 값 조회
+                rList = melonMapper.getUpdateSinger(colNm, pDTO);
+
+            }
+
+        }
+
+        log.info(this.getClass().getName() + ".updateField End!");
+
+        return rList;
+    }
 }

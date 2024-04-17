@@ -158,4 +158,25 @@ public class MelonController {
         return ResponseEntity.ok(
                 CommonResponse.of(HttpStatus.OK, HttpStatus.OK.series().name(), rList));
     }
+
+    /**
+     * 가수 이름 수정하기
+     * 예 : 방탄소년단을 BTS로 변경하기
+     */
+    @PostMapping(value = "updateField")
+    public ResponseEntity updateField(@RequestBody MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".updateField Start!");
+
+        log.info("pDTO : " + pDTO);
+
+
+        List<MelonDTO> rList = Optional.ofNullable(melonService.updateField(pDTO))
+                .orElseGet(ArrayList::new);
+
+        log.info(this.getClass().getName() + ".updateField End!");
+
+        return ResponseEntity.ok(
+                CommonResponse.of(HttpStatus.OK, HttpStatus.OK.series().name(), rList));
+    }
 }

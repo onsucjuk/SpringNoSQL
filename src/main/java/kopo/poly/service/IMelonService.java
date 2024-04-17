@@ -40,5 +40,10 @@ public interface IMelonService {
      */
     List<MelonDTO> insertManyField() throws Exception;
 
+    /**
+     * singer 필드의 값인 방탄소년단을 BTS로 변경하기
+     **/
+    List<MelonDTO> updateField(MelonDTO pDTO) throws Exception;
+
 
 }
