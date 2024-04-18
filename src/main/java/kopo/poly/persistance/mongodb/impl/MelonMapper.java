@@ -17,6 +17,8 @@ import org.bson.Document;
 
 import java.util.*;
 
+import static com.mongodb.client.model.Updates.set;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -330,5 +332,93 @@ public class MelonMapper extends AbstractMongoDBCommon implements IMelonMapper {
         log.info(this.getClass().getName() + ".getUpdateSinger End!");
 
         return rList;
+    }
+
+    @Override
+    public int updateAddField(String colNm, MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".updateAddField Start!");
+
+        int res = 0;
+
+        MongoCollection<Document> col = mongodb.getCollection(colNm);
+
+        String singer = CmmUtil.nvl(pDTO.singer());
+        String nickname = CmmUtil.nvl(pDTO.nickname());
+
+        log.info("pColNm : " + colNm);
+        log.info("singer : " + singer);
+        log.info("nickname : " + nickname);
+
+        // 조회할 조건(SQL의 WHERE 역할 / SELECT * FROM 컬렉션명 WHERE SINGER = '방탄소년단')
+        Document query = new Document();
+        query.append("singer", singer);
+
+        // MongoDB 데이터 삭제는 반드시 컬렉션을 조회하고, 조회된 ObjectID를 기반으로 데이터를 삭제함
+        // MongoDB 환경은 분산환경(Sharding)으로 구성될 수 있기 때문에 정확한 PK에 매핑하기 위해서임
+        FindIterable<Document> rs = col.find(query);
+
+        // 람다식 활용하여 컬렉션에 조회된 데이터들을 수정하기
+        // MongoDB Driver 는 MongoDB의 "$set" 함수를 대신할 자바 함수를 구현함
+        rs.forEach(doc -> col.updateOne(doc, set("nickname", nickname)));
+
+        res = 1;
+
+        log.info(this.getClass().getName() + ".updateAddField End!");
+
+        return res;
+
+    }
+
+    @Override
+    public List<MelonDTO> getSingerSongNickname(String colNm, MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".getSingerSongNickname Start!");
+
+        // 조회 결과를 전달하기 위한 객체 생성하기
+        List<MelonDTO> rList = new LinkedList<>();
+
+        MongoCollection<Document> col = mongodb.getCollection(colNm);
+
+        // 조회할 조건(SQL의 WHERE 역할 / SELECT song FROM 컬렉션명 where singer = '방탄소년단')
+        Document query = new Document();
+        query.append("singer", CmmUtil.nvl(pDTO.singer()));
+
+        // 조회 결과 중 출력할 컬럼들(SQL의 SELECT절과 FROM절 가운데 컬럼들과 유사함)
+        Document projection = new Document();
+        projection.append("song", "$song");
+        projection.append("singer", "$singer");
+        projection.append("nickname", "$nickname");
+
+        // MongoDB는 무조건 ObjectId가 자동생성되며, ObjectID는 사용하지 않을 때, 조회할 필요가 없음
+        // ObjectId를 가지고 오지 않을 때 사용함
+        projection.append("_id", 0);
+
+        // MongoDB의 find 명령어를 통해 조회할 경우 사용함
+        // 조회하는 데이터의 양이 적은 경우, find를 사용하고 데이터의 양의 많은 경우 무조건 Aggregate 사용한다.
+        FindIterable<Document> rs = col.find(query).projection(projection);
+
+        for (Document doc : rs) {
+
+            String song = CmmUtil.nvl(doc.getString("song"));
+            String singer = CmmUtil.nvl(doc.getString("singer"));
+            String nickname = CmmUtil.nvl(doc.getString("nickname"));
+
+            log.info("song : " + song + "/ singer : " + singer + "/ nickname : " + nickname);
+
+            MelonDTO rDTO = MelonDTO.builder()
+                    .song(song)
+                    .singer(singer)
+                    .nickname(nickname)
+                    .build();
+
+            rList.add(rDTO);
+
+        }
+
+        log.info(this.getClass().getName() + ".getSingerSongNickname End!");
+
+        return rList;
+
     }
 }

@@ -13,6 +13,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -207,6 +208,36 @@ public class MelonService implements IMelonService {
         }
 
         log.info(this.getClass().getName() + ".updateField End!");
+
+        return rList;
+    }
+
+    @Override
+    public List<MelonDTO> updateAddField(MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".updateAddField Start!");
+
+        List<MelonDTO> rList = null;
+
+        // 수정할 컬렉션
+        String colNm = "MELON_" + DateUtil.getDateTime("yyyMMdd");
+
+        // 기존 수집된 멜론Top100 수집한 컬렉션 삭제
+        melonMapper.dropCollection(colNm);
+
+        // 멜론Top100 수집하기
+        if (this.collectMelonSong() == 1) {
+
+            // 예 : nickname 필드를 추가하고, nickname 필드 값은 'BTS' 저장하기
+            if  (melonMapper.updateAddField(colNm, pDTO) == 1) {
+
+                // 변경된 값을 확인하기 위해 MongoDB로부터 데이터 조회하기
+                rList = melonMapper.getSingerSongNickname(colNm, pDTO);
+
+            }
+        }
+
+        log.info(this.getClass().getName() + ".updateAddField End!");
 
         return rList;
     }
