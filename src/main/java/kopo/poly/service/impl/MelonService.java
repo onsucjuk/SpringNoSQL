@@ -241,4 +241,64 @@ public class MelonService implements IMelonService {
 
         return rList;
     }
+
+    @Override
+    public List<MelonDTO> updateAddListField(MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".updateAddListField Start!");
+
+        List<MelonDTO> rList = null; // 변경된 데이터 조회 결과
+
+        // 수정할 컬렉션
+        String colNm = "MELON_" + DateUtil.getDateTime("yyyyMMdd");
+
+        // 기존 수집된 멜론Top100 수집한 컬렉션 삭제하기
+        melonMapper.dropCollection(colNm);
+
+        // 멜론 Topp100 수집하기
+        if (this.collectMelonSong() == 1) {
+
+            // MongoDB에 데이터저장하기
+            if (melonMapper.updateAddListField(colNm, pDTO) == 1) {
+
+                // 변경된 값을 확인하기 위해 MongoDB로부터 데이터 조회하기
+                rList = melonMapper.getSingerSongMember(colNm, pDTO);
+
+            }
+        }
+
+        log.info(this.getClass().getName() + ".updateAddListField End!");
+
+        return rList;
+    }
+
+    @Override
+    public List<MelonDTO> deleteDocument(MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".deleteDocument Start!");
+
+        List<MelonDTO> rList = null; // 변경된 데이터 조회 결과
+
+        //삭제할 컬렉션
+        String colNm = "MELON_" + DateUtil.getDateTime("yyyyMMdd");
+
+        // 기존 수집된 멜론Top100 수집한 컬렉션 삭제하기
+        melonMapper.dropCollection(colNm);
+
+        // 멜론Top100 수집하기
+        if (this.collectMelonSong() == 1) {
+
+            // MongoDB 에 데이터 삭제하기
+            if (melonMapper.deleteDocument(colNm, pDTO) == 1) {
+
+                // 삭제된 값을 확인하기 위해 MongoDB로부터 데이터 조회하기
+                rList = melonMapper.getSongList(colNm);
+            }
+
+        }
+
+        log.info(this.getClass().getName() + ".deleteDocument End!");
+
+        return null;
+    }
 }

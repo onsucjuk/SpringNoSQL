@@ -1,5 +1,6 @@
 package kopo.poly.persistance.mongodb.impl;
 
+import ch.qos.logback.core.rolling.helper.MonoTypedConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
@@ -420,5 +421,124 @@ public class MelonMapper extends AbstractMongoDBCommon implements IMelonMapper {
 
         return rList;
 
+    }
+
+    @Override
+    public int updateAddListField(String colNm, MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".updateAddListField Start!");
+
+        int res = 0;
+
+        MongoCollection<Document> col = mongodb.getCollection(colNm);
+
+        String singer = CmmUtil.nvl(pDTO.singer());
+        List<String> member = pDTO.member();
+
+        log.info("pColNm : " + colNm);
+        log.info("pDTO : " + pDTO);
+
+        // 조회할 조건(SQL의 WHERE 역할 / SELECT * FROM 컬렉션명 where singer='방탄소년단')
+        Document query = new Document();
+        query.append("singer", singer);
+
+        // MongoDB 데이터 삭제는 반드시 컬렉션을 조회하고, 조회한 ObjectID를 기반으로 데이터를 삭제함
+        // MongoDB 환경은 분산환경(Sharding)으로 구성될 수 있기 떄문에 정확한 PK에 매핑하기 위해서임
+        FindIterable<Document> rs = col.find(query);
+
+        // 람다식 활용하여 컬렉션에 조회한 데이터들을 수정하기
+        // List 구조는 String 구조와 동일하게 set에 List 객체를 저장하면 된다.
+        // MongoDB의 저장단위는 Document 객체는 자바의 Map을 상속받아 구현한 것이며, Map 특정인 값은 모두 객체가 저장 가능하다.
+        rs.forEach(doc -> col.updateOne(doc, set("member", member)));
+
+        res = 1;
+
+        log.info(this.getClass().getName() + ".updateAddListField End!");
+
+        return res;
+    }
+
+    @Override
+    public List<MelonDTO> getSingerSongMember(String colNm, MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".getSingerSongMember Start!");
+
+        // 조회 결과를 전달하기 위한 객체 생성하기
+        List<MelonDTO> rList = new LinkedList<>();
+
+        MongoCollection<Document> col = mongodb.getCollection(colNm);
+
+        // 조회할 조건(SQL의 WHERE 역할 / SELECT song, singer FROM 컬렉션명 where singer = '방탄소년단')
+
+        Document query = new Document();
+        query.append("singer", CmmUtil.nvl(pDTO.singer()));
+
+        // 조회 결과 중 출력할 컬럼들(SQL의 SELECT절과 FROM절 가운데 컬럼들과 유사함)
+        Document projection = new Document();
+        projection.append("song", "$song");
+        projection.append("singer", "$singer");
+        projection.append("member", "$member");
+
+        projection.append("_id", 0);
+
+        FindIterable<Document> rs = col.find(query).projection(projection);
+
+        for (Document doc : rs) {
+
+            String song = CmmUtil.nvl(doc.getString("song"));
+            String singer = CmmUtil.nvl(doc.getString("singer"));
+            List<String> member = doc.getList("member", String.class, new ArrayList<>());
+
+            log.info("song : " + song + "/ singer : " + singer + "/ member : " + member);
+
+            MelonDTO rDTO = MelonDTO.builder()
+                    .song(song)
+                    .singer(singer)
+                    .member(member)
+                    .build();
+
+            rList.add(rDTO);
+
+        }
+
+        log.info(this.getClass().getName() + ".getSingerSongMember End!");
+
+        return rList;
+    }
+
+    @Override
+    public int deleteDocument(String colNm, MelonDTO pDTO) throws Exception {
+
+        log.info(this.getClass().getName() + ".deleteDocument Start!");
+
+        int res = 0;
+
+        MongoCollection<Document> col = mongodb.getCollection(colNm);
+
+        String singer = CmmUtil.nvl(pDTO.singer());
+
+        log.info("pColNm : " + colNm);
+        log.info("pDTO : " + pDTO);
+
+        // 조회할 조건(SQL의 WHERE 역할
+        Document query = new Document();
+        query.append("singer", singer);
+
+        // 컬렉션 조회 후 ObjectID 기반으로 데이터 삭제
+        FindIterable<Document> rs = col.find(query);
+
+        if (rs != null) {
+
+            // 람다식 활용해서 데이터 삭제
+            // 전체 컬렉션 데이터 삭제
+            rs.forEach(col::deleteOne);
+
+            res = 1;
+
+        }
+
+        log.info(this.getClass().getName() + ".deleteDocument End!");
+
+        return res;
     }
 }
